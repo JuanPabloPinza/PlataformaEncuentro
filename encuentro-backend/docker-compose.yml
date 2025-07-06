@@ -1,0 +1,65 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"  # Puerto para las apps
+      - "15672:15672" # Interfaz de administración web
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
+    networks:
+      - encuentro_net
+
+  postgres_auth:
+    image: postgres:14
+    container_name: postgres_auth
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=auth_db
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - encuentro_net
+
+  mongo_events:
+    image: mongo:5.0
+    container_name: mongo_events
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_events_data:/data/db
+    networks:
+      - encuentro_net
+
+  cockroach_orders:
+    image: cockroachdb/cockroach:v22.1.8
+    container_name: cockroach_orders
+    ports:
+      - "26257:26257" # Puerto SQL
+      - "8081:8080"   # Interfaz de administración web (usamos 8081 para evitar conflictos)
+    command: start-single-node --insecure
+    volumes:
+      - cockroach_orders_data:/cockroach/cockroach-data
+    networks:
+      - encuentro_net
+
+  redis_realtime:
+    image: redis:6.2-alpine
+    container_name: redis_realtime
+    ports:
+      - "6379:6379"
+    networks:
+      - encuentro_net
+
+volumes:
+  postgres_auth_data:
+  mongo_events_data:
+  cockroach_orders_data:
+
+networks:
+  encuentro_net:
+    driver: bridge
